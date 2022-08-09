@@ -10,7 +10,7 @@ class Game:
     # Method that creates a game map with position states
     def _numpyFromPosStates(blockCol, blockRow, agentCol, mapSize):
         # Shape represents (row, column) : first index is row
-        initState = np.zeros( (mapSize, mapSize) )
+        initState = np.zeros( (mapSize + 2, mapSize) )
 
         # Each map is stored as a numpy array, where
         # 1 indicates the block, and 2 indicates the
@@ -19,6 +19,31 @@ class Game:
         initState[-1][agentCol] = 2
 
         return initState
+    
+    # Takes in a numpy state array of the environment.
+    # and returns a dictionary of positions with keys:
+    # blockCol, blockRow, agentCol
+    @staticmethod
+    def posDictFromNumpyArray(stateArray):
+        currAgentColumn = 0
+        currBlockRow = 0
+        currBlockColumn = 0
+        for col, val in enumerate(stateArray[-1]):
+            if val == 2:
+                currAgentColumn = col
+
+        for row, numpyRow in enumerate(stateArray):
+            for col, val in enumerate(numpyRow):
+                if val == 1:
+                    currBlockRow = row
+                    currBlockColumn = col
+
+        return {
+            "blockCol" : currBlockColumn,
+            "blockRow" : currBlockRow,
+            "agentCol" : currAgentColumn
+        }
+
 
     # Map size indicates the width of the game map
     def __init__(self, mapSize):
@@ -45,27 +70,19 @@ class Game:
     # The way timesteps work here is that a new timestep
     # is only created when the agent makes a move. There
     # are 3 possible actions: left, none, right, which map
-    # to values 0, 1, and 2 respectively. Returns -1, 0, 1, which correspond
+    # to values -1, 0, and 1 respectively. Returns -1, 0, 1, which correspond
     # to loss, no result or success respectively
     def act(self, action):
         currState = self.states[-1]
 
         # Compute current positions
-        currAgentColumn = 0
-        currBlockRow = 0
-        currBlockColumn = 0
-        for col, val in enumerate(currState[-1]):
-            if val == 2:
-                currAgentColumn = col
-
-        for row, numpyRow in enumerate(currState):
-            for col, val in enumerate(numpyRow):
-                if val == 1:
-                    currBlockRow = row
-                    currBlockColumn = col
+        posDict = Game.posDictFromNumpyArray(currState)
+        currAgentColumn = posDict["agentCol"]
+        currBlockRow = posDict["blockRow"]
+        currBlockColumn = posDict["blockCol"]
 
         # Update agent column based on input
-        currAgentColumn += (action - 1)
+        currAgentColumn += action
 
         # Update block row based due to tstep
         currBlockRow += 1
@@ -75,8 +92,8 @@ class Game:
 
         self.states.append(newState)
 
-        # If the current block row is the bottom 1, compute if we won or not and return that
-        if currBlockRow == self.mapSize - 1:
+        # If the current block row is the bottom, compute if we won or not and return that
+        if currBlockRow == self.states[-1].shape[0] - 1:
             if currBlockColumn == currAgentColumn:
                 return 1
             else:
