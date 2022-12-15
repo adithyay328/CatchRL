@@ -19,6 +19,32 @@ class Game:
         initState[-1][agentCol] = 2
 
         return initState
+
+    """This method is like the numpy from pos states function,
+    but instead outputs a depth 2 map, with the first layer
+    one-hot encoded with the block row, while the second layer
+    is one-hot encoded with the agent row."""
+    @staticmethod
+    def _depthTwoFromPosStates(blockCol, blockRow, agentCol, mapSize):
+      result = np.zeros( (2, mapSize + 2, mapSize) )
+      
+      # Stroing one-hot values
+      result[0][blockRow][blockCol] = 1
+      result[1][-1][agentCol] = 1
+
+      return result
+    
+    """Converts a depth two array into a depth one array like the one from
+    numpy from pos states."""
+    @staticmethod
+    def _oneDeepArrayFromDepthTwoArray(depthTwoArray):
+      # Multiply the second layer by 2 to convert the agent's position into a 2
+      depthTwoArray[1] = depthTwoArray[1] * 2
+
+      # Now just add the 2 layers together
+      oneDeep = depthTwoArray[0] + depthTwoArray[1]
+
+      return oneDeep
     
     # Takes in a numpy state array of the environment.
     # and returns a dictionary of positions with keys:
@@ -81,8 +107,12 @@ class Game:
         currBlockRow = posDict["blockRow"]
         currBlockColumn = posDict["blockCol"]
 
-        # Update agent column based on input
+        # Update agent column based on input, if it's valid
         currAgentColumn += action
+        if currAgentColumn == self.mapSize:
+          currAgentColumn = self.mapSize - 1
+        elif currAgentColumn == -1:
+          currAgentColumn = 0
 
         # Update block row based due to tstep
         currBlockRow += 1

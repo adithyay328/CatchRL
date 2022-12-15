@@ -80,14 +80,7 @@ class QTableAgent:
         selection or our q-table
         """
         if not exploit:
-          # In random selection mode, we need
-          # to be careful not to exit the map
-          if agentCol == 0:
-            action = random.choice([0, 1])
-          elif agentCol == self.mapSize - 1:
-            action = random.choice([-1, 0])
-          else:
-            action = random.choice([-1, 0, 1])
+          action = random.choice([-1, 0, 1])
         else:
           # When exploiting, look into our q table,
           # and select the action with the highest
@@ -100,7 +93,7 @@ class QTableAgent:
 
         # Now, update the q-table
         newQ = q_base.computeNewQVal(
-            currState, action, currQs[action], LR,
+            currState, action, currQs[action + 1], LR,
             discount 
         )
         self.qTable[blockRow][blockCol][agentCol][action + 1] = newQ
@@ -110,7 +103,7 @@ class QTableAgent:
   
   """Plays the game and prints the display at each step"""
   def play(self):
-    # A new game instance for this epoch
+      # A new game instance for this epoch
       game = Game(self.mapSize)
 
       # Whether or not the game is finished
@@ -124,8 +117,6 @@ class QTableAgent:
         blockCol = stateDict["blockCol"]
         currQs = self.qTable[blockRow][blockCol][agentCol]
 
-        print(currQs)
-
         # When exploiting, look into our q table,
         # and select the action with the highest
         # q-value
@@ -135,12 +126,11 @@ class QTableAgent:
         result = game.act(action)
         finished = result != 0
 
-        print(currState)
-        print(result)
+        if finished:
+          print(result)
 
 agent = QTableAgent()
-agent.learn(1, 0, 1000, 0.99, 1)
-print(agent.qTable)
+agent.learn(1, 1e-8, 1000, 0.99, 1)
 for i in range(100):
   agent.play()
-  time.sleep(4)
+  time.sleep(0.3)
